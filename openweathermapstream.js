@@ -20,10 +20,10 @@ vectorWatch.on("config", function(event, response) {
     apiKey.setDynamic(true);
     apiKey.setAsYouType(45);
     
-    var zipCode = response.createAutocomplete("City");
-	zipCode.setHint("Enter City, eg Minneapolis, MN");
-    zipCode.setDynamic(true);
-    zipCode.setAsYouType(45);
+    var cityName = response.createAutocomplete("City");
+	cityName.setHint("Enter City, eg Minneapolis, MN");
+    cityName.setDynamic(true);
+    cityName.setAsYouType(45);
     
     var format = response.createGridList("format");
     format.addOption("C");
@@ -55,21 +55,21 @@ vectorWatch.on("subscribe", function(event, response) {
     // your stream was added to a watch face
     logger.info("on subscribe");
     var apiKeyVal;
-    var zipCodeVal;
+    var cityName;
     var format;
     try {
         apiKeyVal = event.getUserSettings().settings.ApiKey.name;
-        zipCodeVal = event.getUserSettings().settings.City.name;
+        cityName = event.getUserSettings().settings.City.name;
         format = event.getUserSettings().settings.format.name;
-        getWeather(zipCodeVal, apiKeyVal).then(function(weatherPayload) {
+        getWeather(cityName, apiKeyVal).then(function(weatherPayload) {
             var currentConditions = parseWeatherData(weatherPayload, format);
             response.setValue(currentConditions);
             response.send();
         });
-        logger.info("on subscribe: " + zipCodeVal);
+        logger.info("on subscribe: " + cityName);
     } catch(err) {
         logger.error("on subscribe - malformed user setting: " + err.message);
-        zipCodeVal = "ERROR";
+        cityName = "ERROR";
         response.send();
     }
 });
@@ -79,14 +79,14 @@ vectorWatch.on("unsubscribe", function(event, response) {
     logger.info("on unsubscribe");
     response.send();
 });
-// Request to openweathermap
-function getWeather(zipCode, apiKey) {
+
+function getWeather(cityName, apiKey) {
     return new Promise(function (resolve, reject) {
         var weatherUrl = "http://api.openweathermap.org/data/2.5/weather";
         
         request({
             url: weatherUrl, //URL to hit
-            qs: {q: zipCode + ",MN", appid: apiKey}, //Query string data
+            qs: {q: cityName, appid: apiKey}, //Query string data
             method: "GET", //Specify the method
             headers: { //We can define headers too
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -109,7 +109,6 @@ function getWeather(zipCode, apiKey) {
         });
     });
 }
-// Grab the data we want from the payload
 function parseWeatherData(rawData, format){
     var currentTemp = rawData.main.temp;
     var icons = "";
@@ -131,7 +130,6 @@ function parseWeatherData(rawData, format){
     var convertedTemp = convertKtoTemp(currentTemp, format);
     return icons + " " + convertedTemp + "°" + format;
 }
-// by default it comes in KALVIN
 function convertKtoTemp(temp, format ){
     switch(format)
     {
@@ -141,7 +139,6 @@ function convertKtoTemp(temp, format ){
             return Math.floor((temp-273.15));
     }
 }
-// This is to render appropriate weather condition icons
 function determineWeatherIcon(condition, id){
 //e004	Sunny
 //e005	Clear night
